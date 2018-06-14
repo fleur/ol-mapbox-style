@@ -84,7 +84,6 @@
     "babel-loader": "^7.1.4",
     "babel-plugin-transform-flow-strip-types": "^6.22.0",
     "babel-preset-env": "^1.6.1",
-    "canvas": "^1.6.8",
     "copy-webpack-plugin": "^4.5.1",
     "css-loader": "^0.28.11",
     "deep-freeze": "0.0.1",
@@ -93,13 +92,14 @@
     "eslint-config-openlayers": "^7.0.0",
     "html-webpack-plugin": "^3.1.0",
     "isomorphic-fetch": "^2.2.1",
-    "jest": "^20.0.4",
-    "jest-cli": "^21.2.1",
+    "jest": "^23.1.0",
+    "jest-puppeteer": "^3.0.1",
     "json5": "^0.5.1",
     "mapbox-gl-styles": "^2.0.2",
     "mkdirp": "^0.5.1",
-    "nock": "^9.3.2",
+    "nock": "^9.3.3",
     "ol": ">=5.0.0-beta.13 <5.0.0-c",
+    "puppeteer": "^1.5.0",
     "regenerator-runtime": "^0.11.1",
     "should": "^11.2.1",
     "should-approximately-deep": "^1.1.0",
@@ -109,14 +109,12 @@
     "webpack-dev-server": "^3.1.1"
   },
   "jest": {
-    "setupFiles": [
-      "<rootDir>/env-setup.js"
-    ],
+    "preset": "jest-puppeteer",
+    "testEnvironment": "jsdom",
     "transformIgnorePatterns": [
-      "node_modules/(?!(ol|mapbox-to-ol-style|@mapbox\/mapbox-gl-style-spec)/)"
+      "node_modules/(?!(ol|mapbox-to-ol-style|@mapbox/mapbox-gl-style-spec)/)"
     ],
     "coveragePathIgnorePatterns": [
-      "env-setup.js",
       "/node_modules/"
     ]
   }
