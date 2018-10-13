@@ -1,3 +1,5 @@
+/* eslint import/no-unresolved: [2, { ignore: [ol-mapbox-style] }] */
+
 import 'ol/ol.css';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
