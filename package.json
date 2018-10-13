@@ -70,7 +70,7 @@
     "cover": "jest --coverage"
   },
   "dependencies": {
-    "@mapbox/mapbox-gl-style-spec": "^12.0.0",
+    "@mapbox/mapbox-gl-style-spec": "^13.3.0",
     "mapbox-to-css-font": "^2.2.0",
     "webfont-matcher": "^1.1.0"
   },
@@ -95,13 +95,13 @@
     "isomorphic-fetch": "^2.2.1",
     "jest": "^20.0.4",
     "jest-cli": "^21.2.1",
-    "json5": "^0.5.1",
+    "json5": "^2.1.0",
     "mapbox-gl-styles": "^2.0.2",
     "mkdirp": "^0.5.1",
-    "nock": "^9.3.2",
+    "nock": "^10.0.1",
     "ol": "^5.0.0",
-    "regenerator-runtime": "^0.11.1",
-    "should": "^11.2.1",
+    "regenerator-runtime": "^0.12.1",
+    "should": "^13.2.3",
     "should-approximately-deep": "^1.1.0",
     "style-loader": "^0.23.1",
     "webpack": "^4.20.2",
