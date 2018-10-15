@@ -1,3 +1,5 @@
+/* eslint no-console: "off" */
+
 /*
 ol-mapbox-style - Use Mapbox Style objects with OpenLayers
 Copyright 2016-present Boundless Spatial, Inc.
@@ -109,6 +111,7 @@ function toSpriteUrl(url, path, extension) {
  * for rendering.
  */
 export function applyStyle(layer, glStyle, source, path, resolutions) {
+  console.log('applyStyle: glStyle.version:', glStyle.version);
   return new Promise(function(resolve, reject) {
 
     if (typeof glStyle != 'object') {
@@ -221,7 +224,11 @@ function getSourceIdByRef(layers, ref) {
   return sourceId;
 }
 
-function processStyle(glStyle, map, baseUrl, host, path, accessToken) {
+/*
+ * @return {Promise} Returns a promise that resolves after all the layers' sources
+ * have been set, and all the styles are applied.
+*/
+export function processStyle(glStyle, map, baseUrl, host, path, accessToken) {
   const view = map.getView();
   if ('center' in glStyle && !view.getCenter()) {
     view.setCenter(fromLonLat(glStyle.center));
@@ -248,6 +255,7 @@ function processStyle(glStyle, map, baseUrl, host, path, accessToken) {
   let layerIds = [];
 
   let glLayer, glSource, glSourceId, id, layer, mapid, transition, url;
+  const finalizeLayerPromises = [];
   for (let i = 0, ii = glLayers.length; i < ii; ++i) {
     glLayer = glLayers[i];
     if (glLayer.type == 'background') {
@@ -255,7 +263,7 @@ function processStyle(glStyle, map, baseUrl, host, path, accessToken) {
     } else {
       id = glLayer.source || getSourceIdByRef(glLayers, glLayer.ref);
       if (id != glSourceId) {
-        finalizeLayer(layer, layerIds, glStyle, path, map);
+        finalizeLayerPromises.push(finalizeLayer(layer, layerIds, glStyle, path, map));
         layerIds = [];
         glSource = glStyle.sources[id];
         url = glSource.url;
@@ -389,8 +397,10 @@ function processStyle(glStyle, map, baseUrl, host, path, accessToken) {
       layerIds.push(glLayer.id);
     }
   }
-  finalizeLayer(layer, layerIds, glStyle, path, map);
+  finalizeLayerPromises.push(finalizeLayer(layer, layerIds, glStyle, path, map));
   map.set('mapbox-style', glStyle);
+
+  return Promise.all(finalizeLayerPromises);
 }
 
 /**
@@ -523,25 +533,30 @@ export function apply(map, style) {
  * @return {Promise} Returns a promise that resolves after the source has
  * been set on the specified layer, and the style has been applied.
  */
-function finalizeLayer(layer, layerIds, glStyle, path, map) {
+export function finalizeLayer(layer, layerIds, glStyle, path, map) {
+
   return new Promise(function(resolve, reject) {
     if (layerIds.length > 0) {
+
       map.addLayer(layer);
+
       const setStyle = function() {
         applyStyle(layer, glStyle, layerIds, path).then(function() {
           layer.setVisible(true);
           resolve();
         }, function(e) {
-          /*eslint no-console: ["error", { allow: ["error"] }] */
           console.error(e);
           reject(e);
         });
+
       };
+
       if (layer.getSource()) {
         setStyle();
       } else {
         layer.once('change:source', setStyle);
       }
+
     } else {
       resolve();
     }

@@ -176,6 +176,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
   if (typeof glStyle == 'string') {
     glStyle = JSON.parse(glStyle);
   }
+  console.log('styleFunction: version:', glStyle.version);
   if (glStyle.version != 8) {
     throw new Error('glStyle version 8 required.');
   }
