@@ -67,6 +67,7 @@
     "lint": "eslint __tests__ example *.js",
     "pretest": "npm run lint",
     "test": "jest",
+    "test-plain": "jest",
     "cover": "jest --coverage"
   },
   "dependencies": {

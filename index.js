@@ -247,25 +247,6 @@ function processStyle(glStyle, map, baseUrl, host, path, accessToken) {
   const geoJsonFormat = new GeoJSON();
   let layerIds = [];
 
-  function finalizeLayer(layer) {
-    if (layerIds.length > 0) {
-      map.addLayer(layer);
-      const setStyle = function() {
-        applyStyle(layer, glStyle, layerIds, path).then(function() {
-          layer.setVisible(true);
-        }, function(e) {
-          /*eslint no-console: ["error", { allow: ["error"] }] */
-          console.error(e);
-        });
-      };
-      if (layer.getSource()) {
-        setStyle();
-      } else {
-        layer.once('change:source', setStyle);
-      }
-    }
-  }
-
   let glLayer, glSource, glSourceId, id, layer, mapid, transition, url;
   for (let i = 0, ii = glLayers.length; i < ii; ++i) {
     glLayer = glLayers[i];
@@ -274,7 +255,7 @@ function processStyle(glStyle, map, baseUrl, host, path, accessToken) {
     } else {
       id = glLayer.source || getSourceIdByRef(glLayers, glLayer.ref);
       if (id != glSourceId) {
-        finalizeLayer(layer);
+        finalizeLayer(layer, layerIds, glStyle, path, map);
         layerIds = [];
         glSource = glStyle.sources[id];
         url = glSource.url;
@@ -408,7 +389,7 @@ function processStyle(glStyle, map, baseUrl, host, path, accessToken) {
       layerIds.push(glLayer.id);
     }
   }
-  finalizeLayer(layer);
+  finalizeLayer(layer, layerIds, glStyle, path, map);
   map.set('mapbox-style', glStyle);
 }
 
@@ -449,16 +430,10 @@ function processStyle(glStyle, map, baseUrl, host, path, accessToken) {
  * @return {ol.Map} The OpenLayers Map instance that will be populated with the
  * contents described in the Mapbox Style object.
  */
-export function apply(map, style) {
+export function applyToMap(map, style) {
 
   let accessToken, baseUrl, host, path;
   accessToken = baseUrl = host = path = '';
-
-  if (!(map instanceof Map)) {
-    map = new Map({
-      target: map
-    });
-  }
 
   if (typeof style === 'string') {
     const parts = style.match(spriteRegEx);
@@ -493,6 +468,87 @@ export function apply(map, style) {
   return map;
 }
 
+
+/**
+ * Function to keep API backward compatibility.  Calls the applyStyleToMap(style, map)
+ * function.  Note the parameters are reversed to match the function name.
+ *
+ * @param {ol.Map|HTMLElement|string} map Either an existing OpenLayers Map
+ * instance, or a HTML element, or the id of a HTML element that will be the
+ * target of a new OpenLayers Map.
+ *
+ * @param {string|Object} style JSON style object or style url pointing to a
+ * Mapbox Style object. When using Mapbox APIs, the url must contain an access
+ * token and look like
+ *
+ * @return {ol.Map} The OpenLayers Map instance that will be populated with the
+ * contents described in the Mapbox Style object.
+ */
+export function apply(map, style) {
+
+  if (!(map instanceof Map)) {
+    map = new Map({
+      target: map
+    });
+  }
+
+  applyToMap(map, style);
+
+  return map;
+}
+
+
+/**
+ * If layerIds is not empty, applies the style specified in glStyle to the layer,
+ * and adds the layer to the map.
+ *
+ * The layer may not yet have a source when the function is called.  If so, the style
+ * is applied to the layer via a once listener on the 'change:source' event.
+ *
+ * @param {ol.Map|HTMLElement|string} layer Either an existing OpenLayers Map
+ * instance, or a HTML element, or the id of a HTML element that will be the
+ * target of a new OpenLayers Map.
+ *
+ * @param {array} layerIds Array containing ids of already-processed layers.
+ *
+ * @param {ol.Map|HTMLElement|string} glStyle Style as a JSON object.
+ *
+ * @param {ol.Map|HTMLElement|string} path The path part of the URL to the style,
+ * if the style was defined as a string.  (Why this if glStyle already being passed?)
+ *
+ * @param {ol.Map|HTMLElement|string} map Either an existing OpenLayers Map
+ * instance, or a HTML element, or the id of a HTML element that will be the
+ * target of a new OpenLayers Map.
+ *
+ * @return {Promise} Returns a promise that resolves after the source has
+ * been set on the specified layer, and the style has been applied.
+ */
+function finalizeLayer(layer, layerIds, glStyle, path, map) {
+  return new Promise(function(resolve, reject) {
+    if (layerIds.length > 0) {
+      map.addLayer(layer);
+      const setStyle = function() {
+        applyStyle(layer, glStyle, layerIds, path).then(function() {
+          layer.setVisible(true);
+          resolve();
+        }, function(e) {
+          /*eslint no-console: ["error", { allow: ["error"] }] */
+          console.error(e);
+          reject(e);
+        });
+      };
+      if (layer.getSource()) {
+        setStyle();
+      } else {
+        layer.once('change:source', setStyle);
+      }
+    } else {
+      resolve();
+    }
+  });
+}
+
+
 /**
  * Get the OpenLayers layer instance that contains the provided Mapbox Style
  * `layer`. Note that multiple Mapbox Style layers are combined in a single
@@ -508,6 +564,7 @@ export function getLayer(map, layerId) {
       return layers[i];
     }
   }
+  return null;
 }
 
 /**
@@ -524,4 +581,5 @@ export function getSource(map, sourceId) {
       return source;
     }
   }
+  return null;
 }
